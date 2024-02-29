@@ -73,7 +73,7 @@ const Home = () => {
                         <FaSearchengin className="text-2xl text-primaryText " />
                         <input
                             type="text"
-                            className="flex-1 px-4 py-1 text-xl bg-transparent outline-none border-none text-primaryText placeholder:text-gray-600"
+                            className="flex-1 px-44 py-1 text-xl bg-transparent outline-none border-none text-primaryText placeholder:text-gray-600"
                             placeholder="Search projects..."
                         ></input>
                     </div>
@@ -85,7 +85,7 @@ const Home = () => {
                         >
                             <Link
                                 to={"/home/auth"}
-                                className="bg-emerald-500 px-6 py-3 rounded-md text-white text-lg cursor-pointer hover:bg-emerald-700 "
+                                className="bg-emerald-500 px-6 py-3 rounded-lg text-white text-xl cursor-pointer hover:bg-emerald-700 "
                             >
                                 SignUp
                             </Link>
