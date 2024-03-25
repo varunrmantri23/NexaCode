@@ -7,10 +7,12 @@ import { Link, Route, Routes } from "react-router-dom";
 import Logo from "../assets/img/logo.png";
 import { Projects } from "../container";
 import { SignUp } from "../container";
+import { useSelector } from "react-redux";
+import { UserProfileDetails } from "../components";
 
 const Home = () => {
     const [isSideMenu, setIsSideMenu] = useState(false);
-    const [user, setUser] = useState(null);
+    const user = useSelector((state) => state.user?.user);
 
     return (
         <>
@@ -85,13 +87,13 @@ const Home = () => {
                         >
                             <Link
                                 to={"/home/auth"}
-                                className="bg-emerald-500 px-6 py-3 rounded-lg text-white text-xl cursor-pointer hover:bg-emerald-700 "
+                                className="bg-theme px-6 py-3 rounded-lg text-white text-xl cursor-pointer hover:bg-themedark "
                             >
                                 SignUp
                             </Link>
                         </motion.div>
                     )}
-                    {user && <div></div>}
+                    {user && <UserProfileDetails />}
                 </div>
                 {/* Bottom section */}
                 <div className="w-full">

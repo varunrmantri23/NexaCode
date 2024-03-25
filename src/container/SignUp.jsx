@@ -110,7 +110,7 @@ const SignUp = () => {
                         <motion.div
                             onClick={loginWithEmailPassword}
                             whileTap={{ scale: 0.9 }}
-                            className="flex items-center justify-center w-full bg-emerald-500 py-3 rounded-xl text-white text-xl cursor-pointer hover:bg-emerald-700 "
+                            className="flex items-center justify-center w-full bg-theme py-3 rounded-xl text-white text-xl cursor-pointer hover:bg-themedark "
                         >
                             <p> Log In </p>
                         </motion.div>
@@ -118,7 +118,7 @@ const SignUp = () => {
                         <motion.div
                             onClick={createNewUser}
                             whileTap={{ scale: 0.9 }}
-                            className="flex items-center justify-center w-full bg-emerald-500 py-3 rounded-xl text-white text-xl cursor-pointer hover:bg-emerald-700 "
+                            className="flex items-center justify-center w-full bg-theme py-3 rounded-xl text-white text-xl cursor-pointer hover:bg-themedark "
                         >
                             <p> Sign Up</p>
                         </motion.div>
