@@ -7,13 +7,17 @@ import { Link, Route, Routes } from "react-router-dom";
 import Logo from "../assets/img/logo.png";
 import { Projects } from "../container";
 import { SignUp } from "../container";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { UserProfileDetails } from "../components";
+import { SET_SEARCH_TERM } from "../context/actions/searchActions";
 
 const Home = () => {
     const [isSideMenu, setIsSideMenu] = useState(false);
     const user = useSelector((state) => state.user?.user);
-
+const searchterm = useSelector((state) =>
+    state.searchterm?.searchterm ? state.searchterm?.searchterm : ""
+);
+const dispatch = useDispatch()
     return (
         <>
             <div
@@ -75,8 +79,12 @@ const Home = () => {
                         <FaSearchengin className="text-2xl text-primaryText " />
                         <input
                             type="text"
+                            value={searchterm}
                             className="flex-1 px-44 py-1 text-xl bg-transparent outline-none border-none text-primaryText placeholder:text-gray-600"
                             placeholder="Search projects..."
+                            onChange={(e)=>{
+                                dispatch(SET_SEARCH_TERM(e.target.value))
+                            }}
                         ></input>
                     </div>
                     {/* profile section */}
