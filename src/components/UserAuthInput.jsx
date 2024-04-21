@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaEnvelope, FaEye, FaEyeSlash } from "react-icons/fa6";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { motion } from "framer-motion";
 
 const UserAuthInput = ({
@@ -17,7 +17,6 @@ const UserAuthInput = ({
     const handleTextChange = (e) => {
         setValue(e.target.value);
         setStateFunction(e.target.value);
-
         if (placeHolder === "Email") {
             const emailRegex =
                 /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;

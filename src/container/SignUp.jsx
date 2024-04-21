@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Logo from "../assets/img/logo.png";
 import { UserAuthInput } from "../components";
-import { FaEnvelope, FaEye, FaGithub } from "react-icons/fa6";
+import { FaEnvelope, FaGithub } from "react-icons/fa6";
 import { FcGoogle } from "react-icons/fc";
 import { MdPassword } from "react-icons/md";
 import { AnimatePresence, motion } from "framer-motion";

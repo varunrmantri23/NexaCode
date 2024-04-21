@@ -10,3 +10,27 @@ body {
         BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
         "Open Sans", "Helvetica Neue", sans-serif;
 }
+
+.CodeMirror {
+    height: 340px !important;
+    color: #fff;
+}
+.CodeMirror-gutters {
+    background: #1d1e22 !important;
+}
+.CodeMirror-scroll {
+    background: #1d1e22;
+}
+
+.CodeMirror {
+    padding-top: 0 !important;
+}
+
+#horizontalpanel {
+    top: 100px !important;
+    left:0px;
+}
+
+.ͼo {
+    background: #131417 !important;
+}
