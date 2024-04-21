@@ -3,13 +3,14 @@ import { HiChevronDoubleLeft } from "react-icons/hi2";
 import { MdHome } from "react-icons/md";
 import { FaSearchengin } from "react-icons/fa6";
 import { motion } from "framer-motion";
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Route, Routes, useParams } from "react-router-dom";
 import Logo from "../assets/img/logo.png";
-import { Projects } from "../container";
+import { NewProject, Projects } from "../container";
 import { SignUp } from "../container";
 import { useDispatch, useSelector } from "react-redux";
 import { UserProfileDetails } from "../components";
 import { SET_SEARCH_TERM } from "../context/actions/searchActions";
+import ProjectPage from "./ProjectPage";
 
 const Home = () => {
     const [isSideMenu, setIsSideMenu] = useState(false);
@@ -82,8 +83,8 @@ const dispatch = useDispatch()
                             value={searchterm}
                             className="flex-1 px-44 py-1 text-xl bg-transparent outline-none border-none text-primaryText placeholder:text-gray-600"
                             placeholder="Search projects..."
-                            onChange={(e)=>{
-                                dispatch(SET_SEARCH_TERM(e.target.value))
+                            onChange={(e) => {
+                                dispatch(SET_SEARCH_TERM(e.target.value));
                             }}
                         ></input>
                     </div>
@@ -108,11 +109,18 @@ const dispatch = useDispatch()
                     <Routes>
                         <Route path="/*" element={<Projects />} />
                         <Route path="/auth" element={<SignUp />} />
+                        <Route path="/newProject" element={<NewProject />} />
+                        <Route
+                            exact
+                            path="/projectPage/:projectId"
+                            element={<ProjectPage />}
+                        />
                     </Routes>
                 </div>
             </div>
         </>
     );
 };
+
 
 export default Home;
