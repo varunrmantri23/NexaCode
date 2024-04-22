@@ -2,6 +2,11 @@
 
 Welcome to NexaCode, a web-based platform designed to provide developers with a seamless environment for writing, compiling, and collaborating on code snippets. Below, you'll find a roadmap outlining the initial steps to build NexaCode, along with plans for scaling the project in the future.
 
+
+## Login Credentials for testing 
+project_view@gmail.com
+Viewer@123
+
 ### Initial Steps to Build NexaCode
 
 -   [ ] **Define Goals and Features**:
