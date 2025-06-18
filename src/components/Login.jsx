@@ -1,44 +1,46 @@
 import React, { useState } from "react";
 import Logo from "../assets/img/logo.png";
-import { UserAuthInput, Login } from "../components";
+import { UserAuthInput } from "../components";
 import { FaEnvelope, FaGithub, FaGoogle } from "react-icons/fa6";
 import { MdPassword } from "react-icons/md";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-    createUserWithEmailAndPassword,
-    signInWithPopup,
-    GoogleAuthProvider,
-    GithubAuthProvider,
+import { 
+    signInWithEmailAndPassword, 
+    signInWithPopup, 
+    GoogleAuthProvider, 
+    GithubAuthProvider 
 } from "firebase/auth";
 import { auth } from "../config/firebase.config";
 import { fadeInOut } from "../animations";
 
-const SignUp = () => {
+const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [getEmailValidationStatus, setGetEmailValidationStatus] = useState(false);
-    const [isLogin, setIsLogin] = useState(false);
     const [alert, setAlert] = useState(false);
-    const [alertMessage, setAlertMessage] = useState("");
+    const [alertMsg, setAlertMsg] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const createNewUser = async () => {
+    const signInUser = async () => {
         if (getEmailValidationStatus && email && password) {
             setIsLoading(true);
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                console.log("User created successfully");
+                await signInWithEmailAndPassword(auth, email, password);
+                console.log("User signed in successfully");
             } catch (err) {
                 console.log(err);
-                if (err.message.includes("Password")) {
+                if (err.message.includes("user-not-found")) {
                     setAlert(true);
-                    setAlertMessage("Password should be at least 6 characters");
-                } else if (err.message.includes("email-already")) {
+                    setAlertMsg("User not found");
+                } else if (err.message.includes("wrong-password")) {
                     setAlert(true);
-                    setAlertMessage("Email Already exists");
+                    setAlertMsg("Password mismatch");
+                } else if (err.message.includes("invalid-credential")) {
+                    setAlert(true);
+                    setAlertMsg("Invalid credentials");
                 } else {
                     setAlert(true);
-                    setAlertMessage("Temporarily disabled, try again later");
+                    setAlertMsg("Login failed. Please try again.");
                 }
                 setTimeout(() => {
                     setAlert(false);
@@ -48,7 +50,7 @@ const SignUp = () => {
         }
     };
 
-    const signInWithGoogle = async () => {
+    const loginWithGoogle = async () => {
         setIsLoading(true);
         const googleProvider = new GoogleAuthProvider();
         try {
@@ -57,7 +59,7 @@ const SignUp = () => {
         } catch (err) {
             console.log("Google login error:", err);
             setAlert(true);
-            setAlertMessage("Google login failed. Please try again.");
+            setAlertMsg("Google login failed. Please try again.");
             setTimeout(() => {
                 setAlert(false);
             }, 4000);
@@ -65,7 +67,7 @@ const SignUp = () => {
         setIsLoading(false);
     };
 
-    const signInWithGithub = async () => {
+    const loginWithGitHub = async () => {
         setIsLoading(true);
         const githubProvider = new GithubAuthProvider();
         try {
@@ -74,7 +76,7 @@ const SignUp = () => {
         } catch (err) {
             console.log("GitHub login error:", err);
             setAlert(true);
-            setAlertMessage("GitHub login failed. Please try again.");
+            setAlertMsg("GitHub login failed. Please try again.");
             setTimeout(() => {
                 setAlert(false);
             }, 4000);
@@ -82,101 +84,93 @@ const SignUp = () => {
         setIsLoading(false);
     };
 
-    // If user wants to login, show Login component
-    if (isLogin) {
-        return <Login />;
-    }
-
     return (
         <div className="w-full py-6">
             <img
                 src={Logo}
-                alt="Logo"
                 className="object-contain w-32 opacity-50 h-auto"
+                alt="Logo"
             />
             <div className="w-full flex flex-col items-center justify-center py-8">
-                <p className="py-12 text-primaryText text-2xl">Join With Us! 🤩</p>
+                <p className="py-12 text-2xl text-primaryText">Welcome back! 👋</p>
                 <div className="px-8 w-full md:w-auto py-4 rounded-xl bg-secondary shadow-md flex flex-col items-center justify-center gap-8">
-                    {/* Email */}
                     <UserAuthInput
                         label="Email"
                         placeholder="Email"
                         isPass={false}
-                        setStateFunction={setEmail}
                         Icon={FaEnvelope}
+                        setStateFunction={setEmail}
                         setGetEmailValidationStatus={setGetEmailValidationStatus}
                     />
-                    
-                    {/* Password */}
                     <UserAuthInput
                         label="Password"
                         placeholder="Password"
                         isPass={true}
-                        setStateFunction={setPassword}
                         Icon={MdPassword}
+                        setStateFunction={setPassword}
                     />
 
-                    {/* Alert section */}
+                    {/* Alert */}
                     <AnimatePresence>
                         {alert && (
-                            <motion.p
+                            <motion.p 
                                 key={"AlertMessage"}
-                                {...fadeInOut}
-                                className="text-red-500"
+                                {...fadeInOut} 
+                                className="text-red-500 text-sm py-2"
                             >
-                                {alertMessage}
+                                {alertMsg}
                             </motion.p>
                         )}
                     </AnimatePresence>
 
-                    {/* Sign Up button */}
                     <motion.div
-                        onClick={createNewUser}
+                        onClick={signInUser}
                         whileTap={{ scale: 0.9 }}
-                        className="flex items-center justify-center w-full bg-theme py-3 rounded-xl text-white text-xl cursor-pointer hover:bg-themedark"
+                        className="flex items-center justify-center w-full py-3 rounded-xl hover:bg-theme bg-theme cursor-pointer"
+                        disabled={isLoading}
                     >
-                        <p>{isLoading ? "Creating Account..." : "Sign Up"}</p>
+                        <p className="text-xl text-white">
+                            {isLoading ? "Signing in..." : "Sign In"}
+                        </p>
                     </motion.div>
 
-                    {/* Account text */}
-                    <p className="text-sm text-primaryText flex items-center justify-center gap-3">
-                        Already Have an Account!
+                    <p className="text-sm text-primaryText flex items-center justify-center gap-3 py-3">
+                        Don't have an account?{" "}
                         <span
-                            onClick={() => setIsLogin(true)}
+                            onClick={() => window.location.reload()}
                             className="text-theme cursor-pointer"
                         >
-                            Login Here
+                            Create Here
                         </span>
                     </p>
 
-                    {/* OR divider line */}
-                    <div className="flex items-center justify-center gap-12">
-                        <div className="h-[1px] bg-[rgba(256,256,256,0.2)] w-24 rounded-md"></div>
+                    {/* OR Divider */}
+                    <div className="flex items-center justify-center gap-12 py-4">
+                        <div className="h-[1px] bg-[rgba(256,256,256,0.2)] rounded-md w-24"></div>
                         <p className="text-sm text-[rgba(256,256,256,0.2)]">OR</p>
-                        <div className="h-[1px] bg-[rgba(256,256,256,0.2)] w-24 rounded-md"></div>
+                        <div className="h-[1px] bg-[rgba(256,256,256,0.2)] rounded-md w-24"></div>
                     </div>
 
-                    {/* Sign in with Google */}
+                    {/* Social Login */}
                     <motion.div
-                        onClick={signInWithGoogle}
-                        className="flex items-center justify-center gap-3 bg-[rgba(256,256,256,0.2)] backdrop-blur-md w-full py-3 rounded-xl hover:bg-[rgba(256,256,256,0.4)] cursor-pointer"
+                        onClick={loginWithGoogle}
                         whileTap={{ scale: 0.9 }}
+                        className="flex items-center justify-center gap-3 bg-[rgba(256,256,256,0.2)] backdrop-blur-md w-full py-3 rounded-xl hover:bg-[rgba(256,256,256,0.4)] cursor-pointer mb-3"
                         disabled={isLoading}
                     >
-                        <FaGoogle className="text-xl text-white" />
+                        <FaGoogle className="text-xl" />
                         <p className="text-xl text-white">
                             {isLoading ? "Signing in..." : "Sign in with Google"}
                         </p>
                     </motion.div>
 
-                    {/* Sign in with GitHub */}
                     <motion.div
-                        onClick={signInWithGithub}
-                        className="flex items-center justify-center gap-3 bg-[rgba(256,256,256,0.2)] backdrop-blur-md w-full py-3 rounded-xl hover:bg-[rgba(256,256,256,0.4)] cursor-pointer"
+                        onClick={loginWithGitHub}
                         whileTap={{ scale: 0.9 }}
+                        className="flex items-center justify-center gap-3 bg-[rgba(256,256,256,0.2)] backdrop-blur-md w-full py-3 rounded-xl hover:bg-[rgba(256,256,256,0.4)] cursor-pointer"
                         disabled={isLoading}
                     >
-                        <FaGithub className="text-xl text-white" />
+                        <FaGithub className="text-xl" />
                         <p className="text-xl text-white">
                             {isLoading ? "Signing in..." : "Sign in with GitHub"}
                         </p>
@@ -187,4 +181,4 @@ const SignUp = () => {
     );
 };
 
-export default SignUp;
+export default Login;
