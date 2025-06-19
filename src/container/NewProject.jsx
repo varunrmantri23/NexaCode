@@ -1,12 +1,14 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 import { FaHtml5, FaCss3, FaJs, FaChevronDown } from "react-icons/fa6";
 import { FcSettings } from "react-icons/fc";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
+import { html } from "@codemirror/lang-html";
+import { css } from "@codemirror/lang-css";
 import Logo from "../assets/img/logo.png";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
+import { Link, useNavigate } from "react-router-dom";
 import { MdCheck, MdEdit } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { UserProfileDetails } from "../components";
@@ -14,44 +16,83 @@ import { db } from "../config/firebase.config";
 import { doc, setDoc } from "firebase/firestore";
 import { Alert } from "../components";
 
+// debounce hook
+const useDebounce = (value, delay) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
+};
+
 const NewProject = () => {
-    const [html, setHtml] = useState("");
-    const [css, setCss] = useState("");
-    const [js, setJs] = useState("");
+    const navigate = useNavigate();
+    const [htmlCode, setHtmlCode] = useState("");
+    const [cssCode, setCssCode] = useState("");
+    const [jsCode, setJsCode] = useState("");
     const [output, setOutput] = useState("");
     const [title, setTitle] = useState("Untitled");
     const user = useSelector((state) => state.user?.user);
     const [alert, setAlert] = useState(false);
     const [isTitle, setIsTitle] = useState(false);
-    const navigate = useNavigate(); // Added navigate hook
 
-    const updateOutput = useCallback(() => {
-        const combinedOutput = `
+    // debounce code changes
+    const debouncedHtml = useDebounce(htmlCode, 300);
+    const debouncedCss = useDebounce(cssCode, 300);
+    const debouncedJs = useDebounce(jsCode, 300);
+
+    // memoized output update
+    const combinedOutput = useMemo(() => {
+        return `
             <html>
                 <head>
-                    <style>${css}</style>
+                    <style>${debouncedCss}</style>
                 </head>
                 <body>
-                    ${html}
-                    <script>${js}</script>
+                    ${debouncedHtml}
+                    <script>${debouncedJs}</script>
                 </body>
             </html>
         `;
-        setOutput(combinedOutput);
-    }, [html, css, js]);
+    }, [debouncedHtml, debouncedCss, debouncedJs]);
 
     useEffect(() => {
-        updateOutput();
-    }, [updateOutput]);
+        setOutput(combinedOutput);
+    }, [combinedOutput]);
+
+    // memoized change handlers
+    const handleHtmlChange = useCallback((value) => {
+        setHtmlCode(value);
+    }, []);
+
+    const handleCssChange = useCallback((value) => {
+        setCssCode(value);
+    }, []);
+
+    const handleJsChange = useCallback((value) => {
+        setJsCode(value);
+    }, []);
+
+    const handleTitleChange = useCallback((e) => {
+        setTitle(e.target.value);
+    }, []);
 
     const saveCard = async () => {
         const id = `${Date.now()}`;
         const _doc = {
             id: id,
             title: title,
-            html: html,
-            css: css,
-            js: js,
+            html: htmlCode,
+            css: cssCode,
+            js: jsCode,
             output: output,
             user: {
                 ...user,
@@ -64,7 +105,7 @@ const NewProject = () => {
             setAlert(true);
             setTimeout(() => {
                 setAlert(false);
-                navigate("/home/projects"); // Redirect to home after saving
+                navigate("/home/projects");
             }, 2000);
         } catch (err) {
             console.log("Error saving project:", err);
@@ -97,7 +138,7 @@ const NewProject = () => {
                                         placeholder="Your Title"
                                         className="px-3 py-2 rounded-md bg-transparent text-primaryText text-base outline-none border border-gray-600 focus:border-theme"
                                         value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
+                                        onChange={handleTitleChange}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
                                                 setIsTitle(false);
@@ -139,7 +180,6 @@ const NewProject = () => {
                             <p className="text-primaryText text-sm">
                                 {user?.displayName || `${user?.email?.split("@")[0]}`}
                             </p>
-                            {/* Removed the Follow button since it's the user's own project */}
                         </div>
                     </div>
                 </div>
@@ -161,7 +201,6 @@ const NewProject = () => {
             {/* Main Editor Area */}
             <div className="flex-1 overflow-hidden">
                 <PanelGroup direction="vertical" className="h-full">
-                    {/* Code Editors */}
                     <Panel defaultSize={60} minSize={30}>
                         <PanelGroup direction="horizontal" className="h-full">
                             {/* HTML Panel */}
@@ -179,11 +218,11 @@ const NewProject = () => {
                                     </div>
                                     <div className="flex-1 overflow-hidden">
                                         <CodeMirror
-                                            value={html}
+                                            value={htmlCode}
                                             height="100%"
                                             theme="dark"
-                                            extensions={[javascript({ jsx: true })]}
-                                            onChange={(value) => setHtml(value)}
+                                            extensions={[html()]}
+                                            onChange={handleHtmlChange}
                                             className="h-full"
                                         />
                                     </div>
@@ -207,11 +246,11 @@ const NewProject = () => {
                                     </div>
                                     <div className="flex-1 overflow-hidden">
                                         <CodeMirror
-                                            value={css}
+                                            value={cssCode}
                                             height="100%"
                                             theme="dark"
-                                            extensions={[javascript({ jsx: true })]}
-                                            onChange={(value) => setCss(value)}
+                                            extensions={[css()]}
+                                            onChange={handleCssChange}
                                             className="h-full"
                                         />
                                     </div>
@@ -235,11 +274,11 @@ const NewProject = () => {
                                     </div>
                                     <div className="flex-1 overflow-hidden">
                                         <CodeMirror
-                                            value={js}
+                                            value={jsCode}
                                             height="100%"
                                             theme="dark"
-                                            extensions={[javascript({ jsx: true })]}
-                                            onChange={(value) => setJs(value)}
+                                            extensions={[javascript()]}
+                                            onChange={handleJsChange}
                                             className="h-full"
                                         />
                                     </div>
@@ -257,7 +296,7 @@ const NewProject = () => {
                                 title="Output"
                                 srcDoc={output}
                                 className="w-full h-full border-none"
-                                sandbox="allow-scripts"
+                                sandbox="allow-scripts allow-same-origin"
                             />
                         </div>
                     </Panel>
