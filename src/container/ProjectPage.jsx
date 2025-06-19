@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 import { FaHtml5, FaCss3, FaJs, FaChevronDown } from "react-icons/fa6";
 import { FcSettings } from "react-icons/fc";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
+import { html } from "@codemirror/lang-html";
+import { css } from "@codemirror/lang-css";
 import Logo from "../assets/img/logo.png";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useParams, useNavigate } from "react-router-dom";
@@ -13,6 +15,23 @@ import { Alert } from "../components";
 import { setDoc, doc } from "firebase/firestore";
 import { db } from "../config/firebase.config";
 
+// debounce hook
+const useDebounce = (value, delay) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
+};
+
 const ProjectPage = () => {
     const { projectId } = useParams();
     const navigate = useNavigate();
@@ -20,46 +39,72 @@ const ProjectPage = () => {
     const user = useSelector((state) => state.user?.user);
     const foundProject = projects?.find((proj) => proj.id === projectId);
 
-    const [html, setHtml] = useState("");
-    const [css, setCss] = useState("");
-    const [js, setJs] = useState("");
+    const [htmlCode, setHtmlCode] = useState("");
+    const [cssCode, setCssCode] = useState("");
+    const [jsCode, setJsCode] = useState("");
     const [output, setOutput] = useState("");
     const [title, setTitle] = useState("Untitled");
     const [alert, setAlert] = useState(false);
     const [isTitle, setIsTitle] = useState(false);
 
-    // Check if current user is the owner of the project
+    // debounce code changes for better performance
+    const debouncedHtml = useDebounce(htmlCode, 300);
+    const debouncedCss = useDebounce(cssCode, 300);
+    const debouncedJs = useDebounce(jsCode, 300);
+
     const isOwner = user && foundProject && user.uid === foundProject.user?.uid;
 
     useEffect(() => {
         if (foundProject) {
-            setHtml(foundProject.html || "");
-            setCss(foundProject.css || "");
-            setJs(foundProject.js || "");
+            setHtmlCode(foundProject.html || "");
+            setCssCode(foundProject.css || "");
+            setJsCode(foundProject.js || "");
             setTitle(foundProject.title || "Untitled");
         }
     }, [foundProject]);
 
-    const updateOutput = useCallback(() => {
-        const combinedOutput = `
+    // memoized output update - only runs when debounced values change
+    const combinedOutput = useMemo(() => {
+        return `
             <html>
                 <head>
-                    <style>${css}</style>
+                    <style>${debouncedCss}</style>
                 </head>
                 <body>
-                    ${html}
-                    <script>${js}</script>
+                    ${debouncedHtml}
+                    <script>${debouncedJs}</script>
                 </body>
             </html>
         `;
-        setOutput(combinedOutput);
-    }, [html, css, js]);
+    }, [debouncedHtml, debouncedCss, debouncedJs]);
 
     useEffect(() => {
-        updateOutput();
-    }, [updateOutput]);
+        setOutput(combinedOutput);
+    }, [combinedOutput]);
 
-    // Show loading or not found message
+    // memoized change handlers to prevent unnecessary re-renders
+    const handleHtmlChange = useCallback((value) => {
+        if (isOwner) {
+            setHtmlCode(value);
+        }
+    }, [isOwner]);
+
+    const handleCssChange = useCallback((value) => {
+        if (isOwner) {
+            setCssCode(value);
+        }
+    }, [isOwner]);
+
+    const handleJsChange = useCallback((value) => {
+        if (isOwner) {
+            setJsCode(value);
+        }
+    }, [isOwner]);
+
+    const handleTitleChange = useCallback((e) => {
+        setTitle(e.target.value);
+    }, []);
+
     if (!foundProject) {
         return (
             <div className="w-full h-screen flex items-center justify-center bg-primary">
@@ -86,13 +131,13 @@ const ProjectPage = () => {
         const updatedProject = {
             ...foundProject,
             title: title,
-            html: html,
-            css: css,
-            js: js,
+            html: htmlCode,
+            css: cssCode,
+            js: jsCode,
             output: output,
             user: {
                 ...foundProject.user,
-                uid: foundProject.user.uid // Ensure uid is preserved
+                uid: foundProject.user.uid
             }
         };
         
@@ -114,7 +159,7 @@ const ProjectPage = () => {
                 {alert && <Alert status={"Success"} alertMsg={"Project Updated..."} />}
             </AnimatePresence>
             
-            {/* Header - Fixed height, no shrinking */}
+            {/* Header */}
             <header className="w-full flex items-center justify-between px-4 py-3 bg-secondary border-b border-gray-700 flex-shrink-0">
                 <div className="flex items-center gap-3">
                     <Link to={"/home/projects"}>
@@ -127,14 +172,14 @@ const ProjectPage = () => {
                     <div className="flex flex-col">
                         <div className="flex items-center gap-3">
                             <AnimatePresence>
-                                {isTitle && isOwner ? ( // Only allow editing if user is owner
+                                {isTitle && isOwner ? (
                                     <motion.input
                                         key={"TitleInput"}
                                         type="text"
                                         placeholder="Your Title"
                                         className="px-3 py-2 rounded-md bg-transparent text-primaryText text-base outline-none border border-gray-600 focus:border-theme"
                                         value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
+                                        onChange={handleTitleChange}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
                                                 setIsTitle(false);
@@ -151,7 +196,7 @@ const ProjectPage = () => {
                                 )}
                             </AnimatePresence>
                             <AnimatePresence>
-                                {isOwner && ( // Only show edit button if user is owner
+                                {isOwner && (
                                     isTitle ? (
                                         <motion.div
                                             key={"MdCheck"}
@@ -178,7 +223,7 @@ const ProjectPage = () => {
                             <p className="text-primaryText text-sm">
                                 {foundProject?.user?.displayName || `${foundProject?.user?.email?.split("@")[0]}`}
                             </p>
-                            {!isOwner && ( // Only show follow button if not the owner
+                            {!isOwner && (
                                 <motion.p
                                     whileTap={{ scale: 0.9 }}
                                     className="text-xs bg-theme hover:bg-themedark rounded-sm px-2 py-1 text-primary font-semibold cursor-pointer transition-colors"
@@ -191,7 +236,6 @@ const ProjectPage = () => {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                    {/* Only show save button if user is owner */}
                     {isOwner && (
                         <motion.button
                             whileTap={{ scale: 0.9 }}
@@ -210,10 +254,9 @@ const ProjectPage = () => {
                 </div>
             </header>
 
-            {/* Main Editor Area - Takes remaining height */}
+            {/* Main Editor Area */}
             <div className="flex-1 overflow-hidden">
                 <PanelGroup direction="vertical" className="h-full">
-                    {/* Code Editors Panel */}
                     <Panel defaultSize={60} minSize={30}>
                         <PanelGroup direction="horizontal" className="h-full">
                             {/* HTML Panel */}
@@ -231,13 +274,19 @@ const ProjectPage = () => {
                                     </div>
                                     <div className="flex-1 overflow-hidden bg-primary">
                                         <CodeMirror
-                                            value={html}
+                                            value={htmlCode}
                                             height="100%"
                                             theme="dark"
-                                            extensions={[javascript({ jsx: true })]}
-                                            onChange={(value) => isOwner && setHtml(value)}
+                                            extensions={[html()]}
+                                            onChange={handleHtmlChange}
                                             editable={isOwner}
                                             className="h-full"
+                                            basicSetup={{
+                                                lineNumbers: true,
+                                                foldGutter: true,
+                                                dropCursor: false,
+                                                allowMultipleSelections: false,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -260,13 +309,19 @@ const ProjectPage = () => {
                                     </div>
                                     <div className="flex-1 overflow-hidden bg-primary">
                                         <CodeMirror
-                                            value={css}
+                                            value={cssCode}
                                             height="100%"
                                             theme="dark"
-                                            extensions={[javascript({ jsx: true })]}
-                                            onChange={(value) => isOwner && setCss(value)}
+                                            extensions={[css()]}
+                                            onChange={handleCssChange}
                                             editable={isOwner}
                                             className="h-full"
+                                            basicSetup={{
+                                                lineNumbers: true,
+                                                foldGutter: true,
+                                                dropCursor: false,
+                                                allowMultipleSelections: false,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -289,13 +344,19 @@ const ProjectPage = () => {
                                     </div>
                                     <div className="flex-1 overflow-hidden bg-primary">
                                         <CodeMirror
-                                            value={js}
+                                            value={jsCode}
                                             height="100%"
                                             theme="dark"
-                                            extensions={[javascript({ jsx: true })]}
-                                            onChange={(value) => isOwner && setJs(value)}
+                                            extensions={[javascript()]}
+                                            onChange={handleJsChange}
                                             editable={isOwner}
                                             className="h-full"
+                                            basicSetup={{
+                                                lineNumbers: true,
+                                                foldGutter: true,
+                                                dropCursor: false,
+                                                allowMultipleSelections: false,
+                                            }}
                                         />
                                     </div>
                                 </div>
