@@ -12,6 +12,9 @@ import {
 } from "firebase/auth";
 import { auth } from "../config/firebase.config";
 import { fadeInOut } from "../animations";
+import { useNavigate } from "react-router-dom";
+import { db } from "../config/firebase.config";
+import { doc, setDoc } from "firebase/firestore";
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -20,13 +23,32 @@ const Login = () => {
     const [alert, setAlert] = useState(false);
     const [alertMsg, setAlertMsg] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
 
     const signInUser = async () => {
         if (getEmailValidationStatus && email && password) {
             setIsLoading(true);
             try {
-                await signInWithEmailAndPassword(auth, email, password);
-                console.log("User signed in successfully");
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // update user in firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || email.split('@')[0],
+                    photoURL: user.photoURL || null,
+                    providerId: 'password',
+                    lastLogin: new Date()
+                }, { merge: true });
+                
+                console.log("User logged in successfully");
+                
+                // small delay to ensure auth state propagates
+                setTimeout(() => {
+                    window.location.replace('/home/projects');
+                }, 500);
+                
             } catch (err) {
                 console.log(err);
                 if (err.message.includes("user-not-found")) {
@@ -44,7 +66,7 @@ const Login = () => {
                 }
                 setTimeout(() => {
                     setAlert(false);
-                }, 4000);
+                }, 1000);
             }
             setIsLoading(false);
         }
@@ -55,14 +77,32 @@ const Login = () => {
         const googleProvider = new GoogleAuthProvider();
         try {
             const result = await signInWithPopup(auth, googleProvider);
-            console.log("Google login successful", result.user);
+            const user = result.user;
+            
+            // save/update user in firestore
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                providerId: 'google.com',
+                lastLogin: new Date()
+            }, { merge: true });
+            
+            console.log("Google login successful", user);
+            
+            // small delay to ensure auth state propagates
+            setTimeout(() => {
+                window.location.replace('/home/projects');
+            }, 500);
+            
         } catch (err) {
             console.log("Google login error:", err);
             setAlert(true);
             setAlertMsg("Google login failed. Please try again.");
             setTimeout(() => {
                 setAlert(false);
-            }, 4000);
+            }, 1000);
         }
         setIsLoading(false);
     };
@@ -72,14 +112,32 @@ const Login = () => {
         const githubProvider = new GithubAuthProvider();
         try {
             const result = await signInWithPopup(auth, githubProvider);
-            console.log("GitHub login successful", result.user);
+            const user = result.user;
+            
+            // save/update user in firestore
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                providerId: 'github.com',
+                lastLogin: new Date()
+            }, { merge: true });
+            
+            console.log("GitHub login successful", user);
+            
+            // small delay to ensure auth state propagates
+            setTimeout(() => {
+                window.location.replace('/home/projects');
+            }, 500);
+            
         } catch (err) {
             console.log("GitHub login error:", err);
             setAlert(true);
             setAlertMsg("GitHub login failed. Please try again.");
             setTimeout(() => {
                 setAlert(false);
-            }, 4000);
+            }, 1000);
         }
         setIsLoading(false);
     };

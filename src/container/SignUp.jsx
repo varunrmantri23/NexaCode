@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Logo from "../assets/img/logo.png";
 import { UserAuthInput, Login } from "../components";
 import { FaEnvelope, FaGithub, FaGoogle } from "react-icons/fa6";
@@ -10,10 +11,12 @@ import {
     GoogleAuthProvider,
     GithubAuthProvider,
 } from "firebase/auth";
-import { auth } from "../config/firebase.config";
+import { auth, db } from "../config/firebase.config";
+import { doc, setDoc } from "firebase/firestore";
 import { fadeInOut } from "../animations";
 
 const SignUp = () => {
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [getEmailValidationStatus, setGetEmailValidationStatus] = useState(false);
@@ -26,8 +29,26 @@ const SignUp = () => {
         if (getEmailValidationStatus && email && password) {
             setIsLoading(true);
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // save user to firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || email.split('@')[0],
+                    photoURL: user.photoURL || null,
+                    providerId: 'password',
+                    createdAt: new Date()
+                });
+                
                 console.log("User created successfully");
+                
+                // small delay to ensure auth state propagates
+                setTimeout(() => {
+                    window.location.replace('/home/projects');
+                }, 500);
+                
             } catch (err) {
                 console.log(err);
                 if (err.message.includes("Password")) {
@@ -42,7 +63,7 @@ const SignUp = () => {
                 }
                 setTimeout(() => {
                     setAlert(false);
-                }, 4000);
+                }, 1000);
             }
             setIsLoading(false);
         }
@@ -53,14 +74,32 @@ const SignUp = () => {
         const googleProvider = new GoogleAuthProvider();
         try {
             const result = await signInWithPopup(auth, googleProvider);
-            console.log("Google login successful", result.user);
+            const user = result.user;
+            
+            // save user to firestore
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                providerId: 'google.com',
+                createdAt: new Date()
+            });
+            
+            console.log("Google login successful", user);
+            
+            // small delay to ensure auth state propagates
+            setTimeout(() => {
+                window.location.replace('/home/projects');
+            }, 500);
+            
         } catch (err) {
             console.log("Google login error:", err);
             setAlert(true);
             setAlertMessage("Google login failed. Please try again.");
             setTimeout(() => {
                 setAlert(false);
-            }, 4000);
+            }, 1000);
         }
         setIsLoading(false);
     };
@@ -70,14 +109,32 @@ const SignUp = () => {
         const githubProvider = new GithubAuthProvider();
         try {
             const result = await signInWithPopup(auth, githubProvider);
-            console.log("GitHub login successful", result.user);
+            const user = result.user;
+            
+            // save user to firestore
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                providerId: 'github.com',
+                createdAt: new Date()
+            });
+            
+            console.log("GitHub login successful", user);
+            
+            // small delay to ensure auth state propagates
+            setTimeout(() => {
+                window.location.replace('/home/projects');
+            }, 500);
+            
         } catch (err) {
             console.log("GitHub login error:", err);
             setAlert(true);
             setAlertMessage("GitHub login failed. Please try again.");
             setTimeout(() => {
                 setAlert(false);
-            }, 4000);
+            }, 1000);
         }
         setIsLoading(false);
     };
@@ -161,7 +218,6 @@ const SignUp = () => {
                         onClick={signInWithGoogle}
                         className="flex items-center justify-center gap-3 bg-[rgba(256,256,256,0.2)] backdrop-blur-md w-full py-3 rounded-xl hover:bg-[rgba(256,256,256,0.4)] cursor-pointer"
                         whileTap={{ scale: 0.9 }}
-                        disabled={isLoading}
                     >
                         <FaGoogle className="text-xl text-white" />
                         <p className="text-xl text-white">
@@ -174,7 +230,6 @@ const SignUp = () => {
                         onClick={signInWithGithub}
                         className="flex items-center justify-center gap-3 bg-[rgba(256,256,256,0.2)] backdrop-blur-md w-full py-3 rounded-xl hover:bg-[rgba(256,256,256,0.4)] cursor-pointer"
                         whileTap={{ scale: 0.9 }}
-                        disabled={isLoading}
                     >
                         <FaGithub className="text-xl text-white" />
                         <p className="text-xl text-white">

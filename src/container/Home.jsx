@@ -11,6 +11,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { UserProfileDetails } from "../components";
 import { SET_SEARCH_TERM } from "../context/actions/searchActions";
 import ProjectPage from "./ProjectPage";
+import Collections from "./Collections";
+import Profile from "./Profile";
 
 const Home = () => {
     const location = useLocation();
@@ -145,6 +147,8 @@ const Home = () => {
                             path="/projectPage/:projectId"
                             element={<ProjectPage />}
                         />
+                        <Route path="/collections" element={<Collections />} />
+                        <Route path="/profile" element={<Profile />} />
                     </Routes>
                 </div>
             </div>
